@@ -1,83 +1,45 @@
-import React, { useState } from 'react';
-import Header from './components/Header';
-import IntroSection from './components/IntroSection';
-import UploadSection from './components/UploadSection';
-import Offers from './components/Offers';
-import ResultGallery from './components/ResultGallery';
-import Footer from './components/Footer';
+import React, { useState, useEffect } from "react";
+import Header from "./components/Header";
+import IntroSection from "./components/IntroSection";
+import UploadSection from "./components/UploadSection";
+import Offers from "./components/Offers";
+import ResultGallery from "./components/ResultGallery";
+import Footer from "./components/Footer";
+import "./App.css";
 
-/**
- * Основной компонент приложения, который объединяет все секции:
- * - Header (шапка + переключатель темы)
- * - IntroSection (текст, пример фото "до/после")
- * - UploadSection (загрузка файлов + "кастомизация обработки")
- * - Offers (карточки "Мы предлагаем")
- * - ResultGallery (галерея с кнопками листания)
- * - Footer
- */
 function App() {
-  // Тема: 'dark' или 'light'
-  const [theme, setTheme] = useState('dark');
+  // Состояние для темы (dark/light)
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
 
-  // Список загруженных файлов (превращаем в LocalURL)
-  const [uploadedImages, setUploadedImages] = useState([]);
-
-  // Индекс текущего изображения в галерее
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  // Пример "обработанных" изображений
-  // В реальном приложении вы бы заполняли этот массив результатами с сервера
-  const sampleProcessedImages = [
-    'https://via.placeholder.com/200x300?text=Результат+1',
-    'https://via.placeholder.com/200x300?text=Результат+2',
-    'https://via.placeholder.com/200x300?text=Результат+3'
-  ];
-
-  // Для демонстрации будем объединять "обработанные" и "загруженные" в одном массиве галереи
-  // В реальном проекте логика может быть другая, например показывать только обработанные
-  const galleryImages = [...uploadedImages, ...sampleProcessedImages];
+  // Устанавливаем тему в localStorage и применяем её
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   // Переключение темы
   const toggleTheme = () => {
-    setTheme((prevTheme) => (prevTheme === 'dark' ? 'light' : 'dark'));
+    setTheme(theme === "dark" ? "light" : "dark");
   };
 
-  // Перелистывание вперёд
-  const nextImage = () => {
-    if (galleryImages.length === 0) return;
-    setCurrentIndex((prev) => (prev + 1) % galleryImages.length);
-  };
+  // Состояние для загруженных изображений
+  const [processedImages, setProcessedImages] = useState([]);
 
-  // Перелистывание назад
-  const prevImage = () => {
-    if (galleryImages.length === 0) return;
-    setCurrentIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
+  // Обработчик загрузки файлов (полная замена изображений)
+  const handleImagesUploaded = (newImages) => {
+    setProcessedImages(newImages);
   };
-
-  // Изменяем класс body, чтобы стили темы распространялись
-  React.useEffect(() => {
-    document.body.setAttribute('data-theme', theme);
-  }, [theme]);
 
   return (
     <div className="app-container">
-      <Header theme={theme} toggleTheme={toggleTheme} />
-      
+      <Header theme={theme} onToggleTheme={toggleTheme} />
       <main>
+        {/* Основные секции */}
         <IntroSection />
-
-        <UploadSection onImagesUploaded={setUploadedImages} />
-
+        <UploadSection onImagesUploaded={handleImagesUploaded} />
         <Offers />
-
-        <ResultGallery
-          images={galleryImages}
-          currentIndex={currentIndex}
-          onPrev={prevImage}
-          onNext={nextImage}
-        />
+        <ResultGallery images={processedImages} />
       </main>
-      
       <Footer />
     </div>
   );
